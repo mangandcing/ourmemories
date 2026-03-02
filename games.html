@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fun Zone &ndash; Mang &amp; Cing</title>
+<link rel="stylesheet" href="css/shared.css">
+<style>
+.page-header { text-align:center; padding:50px 20px 20px; }
+.games-wrap { max-width:1000px; margin:0 auto; padding:0 20px 80px; }
+.games-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:20px; position:relative; z-index:1; }
+.game-card {
+  background:var(--card); border:1px solid var(--border); border-radius:22px;
+  padding:28px; backdrop-filter:blur(15px); box-shadow:0 8px 32px var(--shadow); transition:all 0.3s;
+}
+.game-card:hover { transform:translateY(-4px); box-shadow:0 16px 50px var(--shadow); }
+.game-tag { font-size:0.68rem; letter-spacing:2px; text-transform:uppercase; color:var(--gold); font-weight:700; margin-bottom:8px; }
+.game-title { font-family:'Playfair Display',serif; color:var(--deep-rose); font-size:1.2rem; margin-bottom:8px; }
+.game-desc { color:var(--text-light); font-size:0.83rem; margin-bottom:22px; line-height:1.6; font-style:italic; }
+.tod-btns { display:flex; gap:10px; }
+.tod-btn {
+  flex:1; padding:11px; border-radius:12px; border:none;
+  font-family:'Playfair Display',serif; font-size:0.92rem; cursor:pointer; transition:all 0.3s;
+}
+.tod-truth { background:linear-gradient(135deg,#b0c8f0,#7090d0); color:white; }
+.tod-dare  { background:linear-gradient(135deg,#f0b0b8,#d06070); color:white; }
+.tod-btn:hover { transform:scale(1.03); }
+.tod-result {
+  margin-top:14px; padding:14px; border-radius:12px;
+  background:rgba(232,160,176,0.1); border:1px solid var(--border);
+  color:var(--text); font-style:italic; line-height:1.7;
+  font-size:0.88rem; display:none; font-family:'Playfair Display',serif;
+}
+.tod-result.show { display:block; animation:fadeUp 0.4s ease; }
+.calc-inputs { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+.calc-inputs input { flex:1; text-align:center; }
+.calc-sep { color:var(--deep-rose); flex-shrink:0; font-family:'Dancing Script',cursive; font-size:1.2rem; }
+.calc-result {
+  text-align:center; padding:16px; border-radius:12px;
+  background:rgba(212,168,71,0.08); border:1px solid rgba(212,168,71,0.25);
+  display:none; animation:fadeUp 0.4s ease;
+}
+.calc-pct { font-size:3rem; font-weight:700; color:var(--deep-rose); font-family:'Playfair Display',serif; }
+.calc-msg { color:var(--text-light); font-size:0.83rem; font-style:italic; margin-top:6px; }
+.calc-bar { height:7px; border-radius:4px; background:rgba(232,160,176,0.2); margin:10px 0; overflow:hidden; }
+.calc-fill { height:100%; background:var(--btn-grad); border-radius:4px; transition:width 1s ease; }
+.comp-result {
+  padding:16px; border-radius:12px; min-height:70px;
+  background:rgba(232,160,176,0.08); border:1px solid var(--border);
+  text-align:center; font-style:italic; color:var(--text); line-height:1.8;
+  font-family:'Playfair Display',serif; margin-bottom:12px; font-size:0.95rem;
+}
+.comp-btns { display:flex; gap:10px; }
+.wsi-quote {
+  padding:16px; border-radius:12px; background:rgba(232,160,176,0.08);
+  border:1px solid var(--border); text-align:center; font-style:italic;
+  color:var(--text); margin-bottom:14px; font-family:'Playfair Display',serif;
+  min-height:70px; line-height:1.7; font-size:0.93rem;
+}
+.wsi-btns { display:flex; gap:10px; }
+.wsi-btn {
+  flex:1; padding:10px; border-radius:10px; border:1.5px solid var(--border);
+  background:transparent; color:var(--text); cursor:pointer; transition:all 0.3s;
+  font-size:0.88rem;
+}
+.wsi-btn:hover { border-color:var(--deep-rose); color:var(--deep-rose); }
+.wsi-feedback { text-align:center; margin-top:10px; font-weight:700; color:var(--deep-rose); font-size:0.85rem; font-family:'Playfair Display',serif; }
+.wsi-score { font-size:0.78rem; color:var(--text-light); text-align:center; margin-top:4px; }
+.wheel-wrap { text-align:center; }
+.wheel {
+  width:190px; height:190px; border-radius:50%; margin:0 auto 14px; position:relative;
+  border:3px solid var(--deep-rose); box-shadow:0 4px 20px var(--shadow);
+  transition:transform 5s cubic-bezier(.17,.67,.12,.99); cursor:pointer;
+  background:conic-gradient(
+    rgba(232,160,176,0.5) 0% 25%,
+    rgba(212,168,71,0.3) 25% 50%,
+    rgba(160,200,255,0.4) 50% 75%,
+    rgba(180,255,180,0.3) 75% 100%
+  );
+}
+.wheel::after {
+  content:''; position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:38px; height:38px; border-radius:50%;
+  background:var(--bg); border:2px solid var(--deep-rose);
+}
+.spin-pointer { font-size:1.2rem; margin-bottom:6px; color:var(--deep-rose); animation:bounce 1s infinite; }
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+.spin-result { margin-top:12px; font-family:'Playfair Display',serif; color:var(--deep-rose); font-size:0.95rem; min-height:22px; font-style:italic; }
+.joke-text {
+  font-family:'Playfair Display',serif; font-size:0.93rem; color:var(--text); line-height:1.8;
+  margin-bottom:16px; padding:16px; border-radius:12px;
+  background:rgba(232,160,176,0.08); border:1px solid var(--border); min-height:80px;
+}
+</style>
+</head>
+<body>
+<div class="petals-bg" id="petalsBg"></div>
+<div id="navPlaceholder"></div>
+<main>
+<div class="page-header fade-up">
+  <h1 class="section-title">Play Together</h1>
+  <p class="section-sub">Laugh, tease, and enjoy each other&hellip;</p>
+</div>
+<div class="games-wrap">
+<div class="games-grid">
+  <!-- Truth or Dare -->
+  <div class="game-card fade-up">
+    <div class="game-tag">Classic</div>
+    <div class="game-title">Truth or Dare</div>
+    <div class="game-desc">Reveal a secret or accept a challenge &mdash; just for you two.</div>
+    <div class="tod-btns">
+      <button class="tod-btn tod-truth" onclick="getTruth()">Truth</button>
+      <button class="tod-btn tod-dare" onclick="getDare()">Dare</button>
+    </div>
+    <div class="tod-result" id="todResult"></div>
+  </div>
+
+  <!-- Love Calculator -->
+  <div class="game-card fade-up">
+    <div class="game-tag">For Fun</div>
+    <div class="game-title">Love Calculator</div>
+    <div class="game-desc">Calculate compatibility &mdash; the result is always obvious.</div>
+    <div class="calc-inputs">
+      <input type="text" id="calcName1" placeholder="Name 1" value="Mang">
+      <span class="calc-sep">&amp;</span>
+      <input type="text" id="calcName2" placeholder="Name 2" value="Cing">
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="calcLove()">Calculate</button>
+    <div class="calc-result" id="calcResult">
+      <div class="calc-pct" id="calcPct">0%</div>
+      <div class="calc-bar"><div class="calc-fill" id="calcFill" style="width:0%"></div></div>
+      <div class="calc-msg" id="calcMsg"></div>
+    </div>
+  </div>
+
+  <!-- Compliments -->
+  <div class="game-card fade-up">
+    <div class="game-tag">Sweet</div>
+    <div class="game-title">Compliment Generator</div>
+    <div class="game-desc">Never run out of sweet things to say to each other.</div>
+    <div class="comp-result" id="compResult">Click below to generate a compliment.</div>
+    <div class="comp-btns">
+      <button class="btn-primary" style="flex:1" onclick="genComp('Mang')">For Mang</button>
+      <button class="btn-primary" style="flex:1" onclick="genComp('Cing')">For Cing</button>
+    </div>
+  </div>
+
+  <!-- Who Said It -->
+  <div class="game-card fade-up">
+    <div class="game-tag">Quiz</div>
+    <div class="game-title">Who Said It?</div>
+    <div class="game-desc">Guess whether Mang or Cing said it. How well do you know each other?</div>
+    <div class="wsi-quote" id="wsiQuote">Press &ldquo;Next&rdquo; to begin.</div>
+    <div class="wsi-btns">
+      <button class="wsi-btn" onclick="wsiGuess('Mang')">Mang said it</button>
+      <button class="wsi-btn" onclick="wsiGuess('Cing')">Cing said it</button>
+    </div>
+    <div class="wsi-feedback" id="wsiFeedback"></div>
+    <div class="wsi-score" id="wsiScore">Score: 0 / 0</div>
+    <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="wsiNext()">Next</button>
+  </div>
+
+  <!-- Date Night Wheel -->
+  <div class="game-card fade-up">
+    <div class="game-tag">Decide</div>
+    <div class="game-title">Date Night Wheel</div>
+    <div class="game-desc">Cannot agree on what to do? Let fate decide.</div>
+    <div class="wheel-wrap">
+      <div class="spin-pointer">&#x25BC;</div>
+      <div class="wheel" id="wheel" onclick="spinWheel()"></div>
+      <div class="spin-result" id="spinResult">Click the wheel to spin</div>
+    </div>
+  </div>
+
+  <!-- Couple Jokes -->
+  <div class="game-card fade-up">
+    <div class="game-tag">Humor</div>
+    <div class="game-title">Couple Jokes</div>
+    <div class="game-desc">Because laughter is one of the best parts of love.</div>
+    <div class="joke-text" id="jokeText">Click below for a joke.</div>
+    <button class="btn-primary" style="width:100%" onclick="nextJoke()">Next Joke</button>
+  </div>
+</div>
+</div>
+</main>
+<script src="js/shared.js"></script>
+<script>
+checkAuth(); applyTheme();
+document.getElementById('navPlaceholder').innerHTML = navHtml('games');
+spawnPetals(document.getElementById('petalsBg'), 18);
+
+const truths=[
+  "What is the first thing you noticed about me?",
+  "What is your favorite memory of us together?",
+  "When did you first realize you had feelings for me?",
+  "What is one thing I do that makes your day better without you saying anything?",
+  "What is the most embarrassing thing you have done because of me?",
+  "If you could relive one day of our relationship, which would it be and why?",
+  "What is something you have always wanted to tell me but never found the right moment?",
+  "What is the cheesiest thought you have ever had about me?",
+  "What song reminds you most of us, and why?",
+  "What small habit of mine secretly makes you smile?",
+];
+const dares=[
+  "Send me a voice message saying something sweet in three different accents.",
+  "Write my name on your hand right now and send a photo.",
+  "Say three things you love about me out loud, right now, without pausing.",
+  "Do your best impression of me for thirty seconds.",
+  "Send me the most unflattering selfie you can make.",
+  "Text me one embarrassing childhood memory. Go.",
+  "Sing thirty seconds of our song.",
+  "Write me a short poem about us. You have three minutes.",
+  "Let me choose your profile photo for one day.",
+  "Record a five-second video saying something you have never said before.",
+];
+function getTruth(){
+  const r=document.getElementById('todResult');
+  r.textContent=truths[Math.floor(Math.random()*truths.length)];
+  r.classList.add('show');
+}
+function getDare(){
+  const r=document.getElementById('todResult');
+  r.textContent=dares[Math.floor(Math.random()*dares.length)];
+  r.classList.add('show');
+}
+
+function calcLove(){
+  const n1=document.getElementById('calcName1').value.trim().toLowerCase();
+  const n2=document.getElementById('calcName2').value.trim().toLowerCase();
+  let pct;
+  if((n1.includes('mang')&&n2.includes('cing'))||(n1.includes('cing')&&n2.includes('mang'))){ pct=100; }
+  else { pct=72+Math.floor(Math.random()*27); }
+  const r=document.getElementById('calcResult'); r.style.display='block';
+  document.getElementById('calcPct').textContent=pct+'%';
+  setTimeout(()=>document.getElementById('calcFill').style.width=pct+'%',100);
+  document.getElementById('calcMsg').textContent=pct===100?'Made for each other. No further analysis required.':'Very strong compatibility.';
+}
+
+const complsMang=[
+  "Mang, your smile could brighten the darkest room. Cing noticed it the very first time.",
+  "Mang, the way you care for people without expecting anything in return is extraordinary.",
+  "Mang, your laugh is one of Cing\u2019s favorite sounds in the whole world.",
+  "Mang, you have a way of making everything feel safe and okay.",
+  "Mang, you are proof that good people really do exist.",
+  "Mang, you make ordinary days feel like something worth remembering.",
+  "Mang, you are somehow even more endearing when you are being completely ridiculous.",
+  "Mang, Cing is quietly grateful for you every single day.",
+];
+const complsCing=[
+  "Cing, you are genuinely the most beautiful person Mang has ever seen.",
+  "Cing, your kindness changes the people around you without you even realizing it.",
+  "Cing, your laughter is Mang\u2019s absolute favorite sound.",
+  "Cing, the way you love is quiet and fierce and completely wonderful.",
+  "Cing, everything about you is Mang\u2019s favorite thing.",
+  "Cing, you make life more colorful just by being in it.",
+  "Cing, you are effortlessly beautiful, even when you do not believe it.",
+  "Cing, you are the best thing that ever happened to Mang. No question.",
+];
+function genComp(who){
+  const arr=who==='Mang'?complsMang:complsCing;
+  const r=document.getElementById('compResult');
+  r.style.opacity=0;
+  setTimeout(()=>{ r.textContent='\u201c'+arr[Math.floor(Math.random()*arr.length)]+'\u201d'; r.style.transition='opacity 0.4s'; r.style.opacity=1; },200);
+}
+
+const wsiData=[
+  {q:"Why is it so late? I am worried about you.",who:"Mang"},
+  {q:"You always make me feel like the most important person in the room.",who:"Cing"},
+  {q:"Did you eat? I am asking again. Did you eat?",who:"Mang"},
+  {q:"I just want to hold your hand and not let go.",who:"Cing"},
+  {q:"I saw something funny and immediately thought of you.",who:"Mang"},
+  {q:"You are handsome. I know you do not always believe it, but you are.",who:"Cing"},
+  {q:"Stop being so endearing, it is genuinely distracting.",who:"Mang"},
+  {q:"I love you even when you are being difficult right now.",who:"Cing"},
+  {q:"I just need one hug from you and everything will feel better.",who:"Mang"},
+  {q:"You never have to face anything alone. I am right here.",who:"Cing"},
+];
+let wsiIdx=0,wsiCorrect=0,wsiTotal=0;
+function wsiNext(){
+  wsiIdx=Math.floor(Math.random()*wsiData.length);
+  document.getElementById('wsiQuote').textContent='\u201c'+wsiData[wsiIdx].q+'\u201d';
+  document.getElementById('wsiFeedback').textContent='';
+}
+function wsiGuess(g){
+  wsiTotal++;
+  const correct=wsiData[wsiIdx].who===g;
+  if(correct){ wsiCorrect++; document.getElementById('wsiFeedback').textContent='Correct.'; }
+  else { document.getElementById('wsiFeedback').textContent='Not quite \u2014 it was '+wsiData[wsiIdx].who+'.'; }
+  document.getElementById('wsiScore').textContent='Score: '+wsiCorrect+' / '+wsiTotal;
+  setTimeout(wsiNext,1800);
+}
+wsiNext();
+
+const dateOptions=['Movie night at home','Cook a new recipe together','Go stargazing','Dance together in the living room','A picnic, wherever you are','Play a board game','Spa and relaxation evening','A spontaneous drive with no destination'];
+let spinning=false;
+function spinWheel(){
+  if(spinning) return; spinning=true;
+  document.getElementById('spinResult').textContent='Spinning\u2026';
+  const deg=1440+Math.floor(Math.random()*360);
+  document.getElementById('wheel').style.transform='rotate('+deg+'deg)';
+  setTimeout(()=>{
+    spinning=false;
+    const idx=Math.floor(((360-(deg%360))/360)*dateOptions.length)%dateOptions.length;
+    document.getElementById('spinResult').textContent=dateOptions[idx];
+    showNotif('Tonight: '+dateOptions[idx]);
+  },5100);
+}
+
+const jokes=[
+  "Mang: \u201cI love you more than rice.\u201d Cing: \u201cProve it.\u201d Mang: \u201c\u2026I love you as much as rice.\u201d",
+  "Why does Mang smile so much? Because Cing texted back. It really is that simple.",
+  "Cing: \u201cWe need to talk.\u201d Mang\u2019s entire nervous system: initiating full shutdown.",
+  "Mang\u2019s love language: \u201cDid you eat?\u201d Cing\u2019s love language: \u201cLet me worry about you every second of the day.\u201d They are perfect.",
+  "Couple GPS: \u201cIn 500 meters, hold hands. Then disagree on directions. Then laugh about it.\u201d",
+  "Real love is telling someone their lunch looks questionable and eating it anyway because they made it.",
+  "Mang fell for Cing the moment she complained about something trivial and he thought, \u201cShe is so adorable when she does that.\u201d",
+  "Cing: \u201cI\u2019m fine.\u201d Mang, who has been paying attention: \u201cCode red.\u201d",
+  "Being in love means spending twenty minutes arguing about where to eat, then both saying \u201cI don\u2019t mind, you choose.\u201d",
+  "Cing stole Mang\u2019s heart. Mang is pressing absolutely no charges.",
+];
+let ji=0;
+function nextJoke(){
+  ji=(ji+1)%jokes.length;
+  const el=document.getElementById('jokeText');
+  el.style.opacity=0;
+  setTimeout(()=>{ el.textContent=jokes[ji]; el.style.transition='opacity 0.4s'; el.style.opacity=1; },200);
+}
+document.getElementById('jokeText').textContent=jokes[0];
+</script>
+</body>
+</html>

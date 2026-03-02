@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timeline &ndash; Mang &amp; Cing</title>
+<link rel="stylesheet" href="css/shared.css">
+<style>
+.page-header { text-align:center; padding:50px 20px 20px; }
+.timeline-wrap { max-width:800px; margin:0 auto; padding:20px 24px 80px; position:relative; z-index:1; }
+.tl-add-form {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:28px; margin-bottom:44px;
+  backdrop-filter:blur(15px); box-shadow:0 8px 32px var(--shadow);
+}
+.tl-add-form h3 { font-family:'Playfair Display',serif; color:var(--deep-rose); margin-bottom:16px; font-size:1.2rem; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.timeline { position:relative; }
+.timeline::before {
+  content:''; position:absolute; left:50%; top:0; bottom:0;
+  width:1px; background:linear-gradient(to bottom, transparent, var(--rose), var(--gold), var(--rose), transparent);
+  transform:translateX(-50%);
+}
+@media(max-width:600px){
+  .timeline::before { left:18px; }
+  .tl-item { flex-direction:row !important; padding-left:50px !important; }
+  .tl-dot { left:8px !important; right:auto !important; }
+  .tl-content { max-width:100% !important; margin:0 !important; }
+}
+.tl-item { display:flex; align-items:flex-start; margin-bottom:50px; position:relative; animation:fadeUp 0.6s ease; }
+.tl-item.left { flex-direction:row-reverse; }
+.tl-dot {
+  position:absolute; left:50%; transform:translateX(-50%);
+  width:44px; height:44px; border-radius:50%;
+  background:var(--btn-grad); border:3px solid var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Playfair Display',serif; font-size:0.7rem; color:white;
+  font-weight:700; letter-spacing:0.5px; text-align:center; line-height:1.2;
+  box-shadow:0 4px 18px var(--shadow); z-index:2;
+}
+.tl-content {
+  max-width:calc(50% - 50px);
+  background:var(--card); border:1px solid var(--border);
+  border-radius:18px; padding:22px;
+  backdrop-filter:blur(15px); box-shadow:0 4px 20px var(--shadow);
+  transition:all 0.3s;
+}
+.tl-content:hover { transform:translateY(-3px); box-shadow:0 12px 40px var(--shadow); }
+.tl-item.left .tl-content { margin-right:50px; }
+.tl-item.right .tl-content { margin-left:50px; }
+.tl-date { font-size:0.72rem; color:var(--gold); font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+.tl-title { font-family:'Playfair Display',serif; color:var(--deep-rose); font-size:1.05rem; margin-bottom:6px; }
+.tl-desc { color:var(--text-light); font-size:0.88rem; line-height:1.7; font-style:italic; }
+.tl-del { background:none; border:none; color:#cc5566; cursor:pointer; font-size:0.75rem; margin-top:10px; opacity:0.4; transition:opacity 0.2s; }
+.tl-del:hover { opacity:1; }
+</style>
+</head>
+<body>
+<div class="petals-bg" id="petalsBg"></div>
+<div id="navPlaceholder"></div>
+<main>
+<div class="page-header fade-up">
+  <h1 class="section-title">Our Timeline</h1>
+  <p class="section-sub">Every chapter of our beautiful story&hellip;</p>
+</div>
+<div class="timeline-wrap">
+  <div class="tl-add-form fade-up">
+    <h3>Add a Memory</h3>
+    <div class="form-grid">
+      <input type="text" id="tlDate" placeholder="Date (e.g. March 2023)">
+      <input type="text" id="tlTitle" placeholder="Event title">
+    </div>
+    <textarea id="tlDesc" placeholder="Describe this special moment&hellip;" style="min-height:80px;resize:vertical;margin-bottom:14px;"></textarea>
+    <button class="btn-primary" onclick="addEvent()">Add to Timeline</button>
+  </div>
+  <div class="timeline" id="timeline"></div>
+</div>
+</main>
+<script src="js/shared.js"></script>
+<script>
+checkAuth(); applyTheme();
+document.getElementById('navPlaceholder').innerHTML = navHtml('timeline');
+spawnPetals(document.getElementById('petalsBg'), 15);
+let events=JSON.parse(localStorage.getItem('timeline_events')||'[]');
+if(!events.length){
+  events=[
+    {id:1,date:'September 2, 2022',title:'We began',desc:'The universe decided our paths should cross. And everything changed.',dot:'Sep\n2022'},
+    {id:2,date:'Our early days',title:'First moments',desc:'We were both nervous, both pretending not to be. It was perfect.',dot:''},
+    {id:3,date:'Getting closer',title:'When I knew',desc:'There was a quiet moment when I realized this was something real.',dot:''},
+    {id:4,date:'Official',title:'Mang &amp; Cing',desc:'We made it official. The best decision ever made.',dot:'M&amp;C'},
+  ];
+  save();
+}
+function save(){ localStorage.setItem('timeline_events',JSON.stringify(events)); }
+function addEvent(){
+  const date=document.getElementById('tlDate').value.trim();
+  const title=document.getElementById('tlTitle').value.trim();
+  const desc=document.getElementById('tlDesc').value.trim();
+  if(!date||!title){ showNotif('Please enter date and title.'); return; }
+  events.unshift({id:Date.now(),date,title,desc,dot:''});
+  save(); render();
+  document.getElementById('tlDate').value='';
+  document.getElementById('tlTitle').value='';
+  document.getElementById('tlDesc').value='';
+  showNotif('Memory added.');
+}
+function deleteEvent(id){ if(confirm('Remove this memory?')){ events=events.filter(e=>e.id!==id); save(); render(); } }
+function render(){
+  const tl=document.getElementById('timeline');
+  const role=getRole();
+  tl.innerHTML=events.map((e,i)=>{
+    const side=i%2===0?'right':'left';
+    return `<div class="tl-item ${side}">
+      <div class="tl-dot">${e.dot||'&#x2764;'}</div>
+      <div class="tl-content">
+        <div class="tl-date">${e.date}</div>
+        <div class="tl-title">${e.title}</div>
+        ${e.desc?`<div class="tl-desc">${e.desc}</div>`:''}
+        ${role!=='site'?`<button class="tl-del" onclick="deleteEvent(${e.id})">Remove</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>

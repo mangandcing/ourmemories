@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mang &amp; Cing</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e8a0b0;
+    --deep-rose: #c0667a;
+    --gold: #d4a847;
+    --text: #3a1a22;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height:100vh;
+    background: linear-gradient(135deg, #fce8ee 0%, #fff4ec 50%, #eef0fc 100%);
+    font-family: 'Lato', sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+    transition: background 0.4s;
+  }
+  body.dark {
+    background: linear-gradient(135deg, #1a0a0e 0%, #100a18 50%, #0a1018 100%);
+  }
+  .petal {
+    position:fixed; border-radius:50% 0 50% 0;
+    animation: fall linear infinite; pointer-events:none;
+  }
+  @keyframes fall {
+    0%   { transform: translateY(-20px) rotate(0deg); opacity: 0.7; }
+    100% { transform: translateY(110vh) rotate(700deg); opacity: 0; }
+  }
+  .gate {
+    position:relative; z-index:10;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(232,160,176,0.35);
+    border-radius: 28px;
+    padding: 64px 52px;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(192,102,122,0.13);
+    max-width: 440px; width: 90%;
+    animation: fadeUp 0.9s ease forwards;
+  }
+  body.dark .gate {
+    background: rgba(28,8,16,0.90);
+    border-color: rgba(192,102,122,0.25);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(28px);} to{opacity:1;transform:translateY(0);} }
+  .monogram {
+    font-family: 'Dancing Script', cursive;
+    font-size: 3.2rem; color: var(--deep-rose);
+    margin-bottom: 4px; display: block;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  body.dark .monogram { color: #f0a0b8; }
+  @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.06);} }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; color: var(--deep-rose);
+    margin-bottom: 6px; font-weight: 400;
+  }
+  body.dark h1 { color: #f0a0b8; }
+  .subtitle {
+    color: #a07080; font-size: 0.9rem;
+    margin-bottom: 36px; font-style: italic; letter-spacing: 0.5px;
+  }
+  body.dark .subtitle { color: #806070; }
+  .divider {
+    width: 48px; height: 1px;
+    background: linear-gradient(to right, transparent, var(--rose), transparent);
+    margin: 0 auto 32px;
+  }
+  input[type=password] {
+    width: 100%; padding: 14px 22px;
+    border: 1.5px solid rgba(232,160,176,0.5);
+    border-radius: 50px; font-size: 0.95rem;
+    background: rgba(255,245,248,0.8);
+    color: var(--text); outline: none;
+    font-family: 'Lato', sans-serif;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    letter-spacing: 2px; margin-bottom: 14px;
+  }
+  body.dark input[type=password] {
+    background: rgba(40,10,22,0.8); color: #f0e0e8;
+    border-color: rgba(192,102,122,0.35);
+  }
+  input[type=password]:focus {
+    border-color: var(--deep-rose);
+    box-shadow: 0 0 0 3px rgba(192,102,122,0.1);
+  }
+  .btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #e8a0b0, #c0667a);
+    color: white; border: none; border-radius: 50px;
+    font-size: 0.92rem; font-family: 'Playfair Display', serif;
+    cursor: pointer; transition: all 0.3s;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(192,102,122,0.38); }
+  .error {
+    color: #c0667a; font-size: 0.83rem;
+    margin-top: 12px; opacity: 0;
+    transition: opacity 0.3s; font-style: italic;
+  }
+  .error.show { opacity: 1; }
+  .hint { color: #bbb; font-size: 0.78rem; margin-top: 22px; }
+  body.dark .hint { color: #555; }
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; z-index: 100;
+    background: rgba(255,255,255,0.82); border: 1px solid rgba(232,160,176,0.4);
+    border-radius: 50px; padding: 8px 18px; cursor: pointer;
+    font-size: 0.8rem; color: var(--deep-rose); letter-spacing: 0.5px;
+    backdrop-filter: blur(12px); transition: all 0.3s;
+    font-family: 'Lato', sans-serif;
+  }
+  body.dark .theme-toggle {
+    background: rgba(28,8,16,0.85); border-color: rgba(192,102,122,0.3); color: #f0a0b8;
+  }
+  .theme-toggle:hover { background: var(--deep-rose); color: white; border-color: transparent; }
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()">Dark &nbsp;/&nbsp; Light</button>
+<div id="petalContainer"></div>
+<div class="gate">
+  <span class="monogram">M &amp; C</span>
+  <h1>Mang &amp; Cing</h1>
+  <p class="subtitle">Our little world, just for us</p>
+  <div class="divider"></div>
+  <input type="password" id="pwInput" placeholder="Password" onkeydown="if(event.key==='Enter')tryEnter()">
+  <button class="btn" onclick="tryEnter()">Enter</button>
+  <p class="error" id="err">Incorrect password. Please try again.</p>
+  <p class="hint">Contact Mang or Cing for the password.</p>
+</div>
+<script>
+const PASSWORDS = { 'sweetlove2024':'site', 'mang2024':'mang', 'cing2024':'cing' };
+function tryEnter(){
+  const val = document.getElementById('pwInput').value.trim().toLowerCase();
+  if(PASSWORDS[val]){
+    sessionStorage.setItem('role', PASSWORDS[val]);
+    sessionStorage.setItem('auth','true');
+    window.location.href='home.html';
+  } else {
+    const e = document.getElementById('err');
+    e.classList.add('show');
+    setTimeout(()=>e.classList.remove('show'),2800);
+    document.getElementById('pwInput').value='';
+  }
+}
+const container=document.getElementById('petalContainer');
+const colors=['#f9bfcf','#e8a0b0','#fce4ec','#f8bbd0'];
+for(let i=0;i<18;i++){
+  const p=document.createElement('div'); p.className='petal';
+  const size=7+Math.random()*10;
+  p.style.cssText=`left:${Math.random()*100}%;width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${8+Math.random()*14}s;animation-delay:${-Math.random()*22}s;opacity:${0.3+Math.random()*0.4};`;
+  container.appendChild(p);
+}
+function toggleTheme(){ document.body.classList.toggle('dark'); localStorage.setItem('theme',document.body.classList.contains('dark')?'dark':'light'); }
+if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
+</script>
+</body>
+</html>

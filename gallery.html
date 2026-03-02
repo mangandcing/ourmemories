@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery &ndash; Mang &amp; Cing</title>
+<link rel="stylesheet" href="css/shared.css">
+<style>
+.page-header { text-align:center; padding:50px 20px 20px; }
+.upload-zone {
+  max-width:680px; margin:0 auto 40px;
+  border:1.5px dashed var(--border); border-radius:20px;
+  padding:32px; text-align:center;
+  background:var(--card); backdrop-filter:blur(15px);
+  transition:border-color 0.3s; position:relative; z-index:1;
+}
+.upload-zone:hover { border-color:var(--deep-rose); }
+.upload-zone input[type=file] { display:none; }
+.upload-label {
+  display:inline-block; cursor:pointer;
+  padding:11px 28px; border-radius:50px;
+  background:var(--btn-grad); color:white;
+  font-family:"Playfair Display",serif; font-size:0.95rem;
+  margin-bottom:12px; transition:all 0.3s;
+  letter-spacing:0.5px;
+}
+.upload-label:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(192,102,122,0.4); }
+.upload-hint { font-size:0.82rem; color:var(--text-light); margin-top:10px; line-height:1.6; }
+.gallery-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:14px; padding:0 24px 60px; max-width:1200px; margin:0 auto;
+  position:relative; z-index:1;
+}
+.gallery-item {
+  position:relative; border-radius:16px; overflow:hidden;
+  aspect-ratio:1; cursor:pointer;
+  box-shadow:0 4px 20px var(--shadow);
+  transition:all 0.35s; border:1.5px solid var(--border);
+}
+.gallery-item:hover { transform:scale(1.04) rotate(0.4deg); box-shadow:0 15px 50px var(--shadow); border-color:var(--deep-rose); }
+.gallery-item img { width:100%; height:100%; object-fit:cover; transition:transform 0.4s; }
+.gallery-item:hover img { transform:scale(1.08); }
+.gallery-item .overlay {
+  position:absolute; bottom:0; left:0; right:0;
+  background:linear-gradient(transparent,rgba(30,5,15,0.7));
+  padding:20px 12px 12px; color:white;
+  opacity:0; transition:opacity 0.3s;
+  font-size:0.8rem; font-style:italic;
+}
+.gallery-item:hover .overlay { opacity:1; }
+.gallery-item .del-btn {
+  position:absolute; top:8px; right:8px;
+  background:rgba(180,40,70,0.85); color:white;
+  border:none; border-radius:50%; width:28px; height:28px;
+  cursor:pointer; font-size:0.75rem;
+  display:none; align-items:center; justify-content:center;
+}
+.gallery-item:hover .del-btn { display:flex; }
+.lightbox {
+  display:none; position:fixed; inset:0; z-index:9000;
+  background:rgba(8,0,4,0.96); backdrop-filter:blur(10px);
+  align-items:center; justify-content:center; flex-direction:column;
+}
+.lightbox.open { display:flex; }
+.lightbox img {
+  max-width:90vw; max-height:80vh;
+  border-radius:16px; box-shadow:0 20px 80px rgba(0,0,0,0.8);
+  border:1px solid rgba(232,160,176,0.3);
+}
+.lb-controls { display:flex; gap:16px; margin-top:20px; }
+.lb-btn {
+  padding:9px 24px; border-radius:50px;
+  border:1px solid rgba(232,160,176,0.4);
+  background:rgba(255,255,255,0.08); color:white; cursor:pointer; font-size:0.88rem;
+  transition:all 0.3s; letter-spacing:0.5px;
+}
+.lb-btn:hover { background:var(--deep-rose); border-color:transparent; }
+.lb-close { position:absolute; top:20px; right:24px; font-size:1.6rem; color:rgba(255,255,255,0.6); cursor:pointer; }
+.lb-close:hover { color:white; }
+.lb-caption { color:rgba(255,255,255,0.55); font-style:italic; margin-top:12px; font-size:0.85rem; }
+.empty-state { text-align:center; padding:70px 20px; color:var(--text-light); }
+.empty-state p { font-family:"Playfair Display",serif; font-style:italic; font-size:1.1rem; }
+</style>
+</head>
+<body>
+<div class="petals-bg" id="petalsBg"></div>
+<div id="navPlaceholder"></div>
+<main>
+<div class="page-header fade-up">
+  <h1 class="section-title">Our Gallery</h1>
+  <p class="section-sub">Every picture tells our story&hellip;</p>
+</div>
+<div class="upload-zone fade-up">
+  <label class="upload-label" for="fileInput">Add Photos</label>
+  <input type="file" id="fileInput" accept="image/*" multiple onchange="handleUpload(this.files)">
+  <div class="upload-hint">
+    Click to upload or drag &amp; drop &mdash; JPG, PNG, WEBP supported<br>
+    <small>You may also place images named <strong>1.jpg</strong>, <strong>2.jpg</strong>&hellip; in the <strong>images/</strong> folder and they will appear automatically.</small>
+  </div>
+</div>
+<div class="gallery-grid" id="galleryGrid"></div>
+<div class="empty-state" id="emptyState" style="display:none;">
+  <p>No photos yet. Add your first memory above.</p>
+</div>
+</main>
+<div class="lightbox" id="lightbox">
+  <span class="lb-close" onclick="closeLightbox()">&#x2715;</span>
+  <img id="lbImg" src="" alt="">
+  <p class="lb-caption" id="lbCaption"></p>
+  <div class="lb-controls">
+    <button class="lb-btn" onclick="lbNav(-1)">&larr; Previous</button>
+    <button class="lb-btn" onclick="closeLightbox()">Close</button>
+    <button class="lb-btn" onclick="lbNav(1)">Next &rarr;</button>
+  </div>
+</div>
+<script src="js/shared.js"></script>
+<script>
+checkAuth(); applyTheme();
+document.getElementById("navPlaceholder").innerHTML = navHtml("gallery");
+spawnPetals(document.getElementById("petalsBg"), 18);
+let photos=[]; let currentLb=0;
+const exts=["jpg","jpeg","png","webp","JPG","JPEG","PNG"];
+function checkFolderImages(){
+  for(let i=1;i<=100;i++){
+    for(const ext of exts){
+      const src="images/"+i+"."+ext;
+      const img=new Image();
+      img.onload=()=>{ photos.push({src,name:"Memory "+i}); renderGallery(); };
+      img.src=src;
+    }
+  }
+  setTimeout(loadLocalPhotos,500);
+}
+function loadLocalPhotos(){
+  const saved=JSON.parse(localStorage.getItem("gallery_photos")||"[]");
+  saved.forEach(p=>{ if(!photos.find(x=>x.src===p.src)) photos.push(p); });
+  renderGallery();
+}
+function handleUpload(files){
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const p={src:e.target.result,name:file.name.replace(/\.[^.]+$/,"")};
+      photos.push(p);
+      try{ const s=JSON.parse(localStorage.getItem("gallery_photos")||"[]"); s.push(p); localStorage.setItem("gallery_photos",JSON.stringify(s)); }catch(err){}
+      renderGallery(); showNotif("Photo added.");
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderGallery(){
+  const grid=document.getElementById("galleryGrid");
+  const empty=document.getElementById("emptyState");
+  if(!photos.length){ empty.style.display="block"; grid.innerHTML=""; return; }
+  empty.style.display="none";
+  grid.innerHTML="";
+  photos.forEach((p,i)=>{
+    const div=document.createElement("div"); div.className="gallery-item fade-up";
+    div.style.animationDelay=(i*0.04)+"s";
+    div.innerHTML='<img src="'+p.src+'" alt="'+p.name+'" loading="lazy"><div class="overlay">'+p.name+'</div><button class="del-btn" onclick="deletePhoto('+i+',event)">&#x2715;</button>';
+    div.addEventListener("click",()=>openLightbox(i));
+    grid.appendChild(div);
+  });
+}
+function deletePhoto(i,e){
+  e.stopPropagation();
+  if(confirm("Remove this photo?")){
+    photos.splice(i,1);
+    const saved=photos.filter(p=>p.src.startsWith("data:"));
+    try{ localStorage.setItem("gallery_photos",JSON.stringify(saved)); }catch(err){}
+    renderGallery(); showNotif("Photo removed.");
+  }
+}
+function openLightbox(i){
+  currentLb=i;
+  document.getElementById("lbImg").src=photos[i].src;
+  document.getElementById("lbCaption").textContent=photos[i].name;
+  document.getElementById("lightbox").classList.add("open");
+}
+function closeLightbox(){ document.getElementById("lightbox").classList.remove("open"); }
+function lbNav(dir){ currentLb=(currentLb+dir+photos.length)%photos.length; openLightbox(currentLb); }
+document.getElementById("lightbox").addEventListener("click",function(e){ if(e.target===this)closeLightbox(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape")closeLightbox(); if(e.key==="ArrowLeft")lbNav(-1); if(e.key==="ArrowRight")lbNav(1); });
+const uz=document.querySelector(".upload-zone");
+uz.addEventListener("dragover",e=>{ e.preventDefault(); uz.style.borderColor="var(--deep-rose)"; });
+uz.addEventListener("dragleave",()=>{ uz.style.borderColor=""; });
+uz.addEventListener("drop",e=>{ e.preventDefault(); uz.style.borderColor=""; handleUpload(e.dataTransfer.files); });
+checkFolderImages();
+</script>
+</body>
+</html>

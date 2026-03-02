@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music &ndash; Mang &amp; Cing</title>
+<link rel="stylesheet" href="css/shared.css">
+<style>
+.page-header { text-align:center; padding:50px 20px 20px; }
+.music-wrap { max-width:780px; margin:0 auto; padding:0 20px 80px; }
+.now-playing {
+  background:var(--card); border:1px solid var(--border); border-radius:24px;
+  padding:36px; margin-bottom:28px; text-align:center;
+  backdrop-filter:blur(15px); box-shadow:0 8px 40px var(--shadow);
+  position:relative; z-index:1; display:none;
+}
+.now-playing.visible { display:block; }
+.vinyl {
+  width:140px; height:140px; border-radius:50%;
+  background:conic-gradient(from 0deg, #c0667a 0%, #200a12 33%, #c0667a 50%, #d4a847 66%, #200a12 83%, #c0667a 100%);
+  margin:0 auto 22px; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 8px 32px rgba(0,0,0,0.25);
+  animation:spin 6s linear infinite; animation-play-state:paused;
+}
+.vinyl.playing { animation-play-state:running; }
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.vinyl-center {
+  width:42px; height:42px; border-radius:50%;
+  background:var(--bg); border:2px solid rgba(255,255,255,0.2);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Dancing Script',cursive; font-size:0.85rem; color:var(--deep-rose);
+}
+.song-title { font-family:'Playfair Display',serif; font-size:1.3rem; color:var(--text); margin-bottom:4px; }
+.song-meta { color:var(--text-light); font-size:0.88rem; margin-bottom:20px; font-style:italic; }
+audio { width:100%; border-radius:10px; margin-bottom:16px; }
+.player-btns { display:flex; gap:12px; justify-content:center; }
+.upload-audio {
+  background:var(--card); border:1.5px dashed var(--border); border-radius:20px;
+  padding:28px; text-align:center; margin-bottom:28px;
+  backdrop-filter:blur(15px); position:relative; z-index:1;
+}
+.upload-audio input[type=file] { display:none; }
+.add-song-form {
+  background:var(--card); border:1px solid var(--border); border-radius:20px;
+  padding:24px; margin-bottom:28px; backdrop-filter:blur(15px); position:relative; z-index:1;
+}
+.add-song-form h3 { font-family:'Playfair Display',serif; color:var(--deep-rose); margin-bottom:14px; font-size:1.1rem; }
+.form-row3 { display:grid; grid-template-columns:2fr 2fr; gap:10px; margin-bottom:10px; }
+.playlist { position:relative; z-index:1; }
+.playlist-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.playlist-header h3 { font-family:'Playfair Display',serif; color:var(--deep-rose); }
+.song-item {
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:14px 18px; margin-bottom:10px; display:flex;
+  align-items:center; gap:14px; cursor:pointer;
+  backdrop-filter:blur(15px); transition:all 0.3s;
+}
+.song-item:hover, .song-item.active { border-color:var(--deep-rose); transform:translateX(4px); }
+.song-item.active { background:rgba(232,160,176,0.12); }
+.song-number { width:24px; text-align:center; font-size:0.8rem; color:var(--text-light); flex-shrink:0; }
+.song-info { flex:1; }
+.song-name { font-family:'Playfair Display',serif; color:var(--text); font-size:0.95rem; }
+.song-note { font-size:0.78rem; color:var(--text-light); font-style:italic; margin-top:2px; }
+.play-icon { color:var(--deep-rose); font-size:0.85rem; letter-spacing:0.5px; }
+.del-song { background:none; border:none; cursor:pointer; color:#cc5566; font-size:0.78rem; opacity:0.35; transition:opacity 0.2s; }
+.del-song:hover { opacity:1; }
+</style>
+</head>
+<body>
+<div class="petals-bg" id="petalsBg"></div>
+<div id="navPlaceholder"></div>
+<main>
+<div class="page-header fade-up">
+  <h1 class="section-title">Our Music</h1>
+  <p class="section-sub">The soundtrack of our love story&hellip;</p>
+</div>
+<div class="music-wrap">
+  <div class="now-playing fade-up" id="nowPlaying">
+    <div class="vinyl" id="vinyl"><div class="vinyl-center">M&amp;C</div></div>
+    <div class="song-title" id="npTitle">Select a song to play</div>
+    <div class="song-meta" id="npMeta">Our playlist</div>
+    <audio id="mainAudio" controls onplay="onPlay()" onpause="onPause()" onended="nextSong()"></audio>
+    <div class="player-btns">
+      <button class="btn-secondary" onclick="prevSong()">Previous</button>
+      <button class="btn-secondary" onclick="nextSong()">Next</button>
+    </div>
+  </div>
+  <div class="upload-audio fade-up">
+    <label class="btn-primary" for="audioInput" style="display:inline-block;cursor:pointer;">Upload Audio</label>
+    <input type="file" id="audioInput" accept="audio/*" multiple onchange="handleAudioUpload(this.files)">
+    <p style="margin-top:12px;font-size:0.82rem;color:var(--text-light);">MP3, WAV, M4A &mdash; Add your special songs directly.</p>
+  </div>
+  <div class="add-song-form fade-up">
+    <h3>Add a Song by URL or Filename</h3>
+    <div class="form-row3">
+      <input type="text" id="newSongName" placeholder="Song name">
+      <input type="text" id="newSongNote" placeholder="Why this song?">
+    </div>
+    <input type="text" id="newSongUrl" placeholder="File path or URL (e.g. audio/song.mp3)" style="margin-bottom:12px;">
+    <button class="btn-primary" onclick="addSongManual()">Add to Playlist</button>
+  </div>
+  <div class="playlist fade-up">
+    <div class="playlist-header">
+      <h3>Our Playlist</h3>
+      <span style="color:var(--text-light);font-size:0.82rem;" id="songCount"></span>
+    </div>
+    <div id="playlistContainer"></div>
+  </div>
+</div>
+</main>
+<script src="js/shared.js"></script>
+<script>
+checkAuth(); applyTheme();
+document.getElementById('navPlaceholder').innerHTML = navHtml('music');
+spawnPetals(document.getElementById('petalsBg'), 15);
+let songs=JSON.parse(localStorage.getItem('our_songs')||'[]');
+let currentIdx=-1;
+if(!songs.length){
+  songs=[{id:1,name:'Our first song',note:'Play it and think of me',src:''},{id:2,name:'The one that reminds me of you',note:'Every single time',src:''}];
+  save();
+}
+function save(){ localStorage.setItem('our_songs',JSON.stringify(songs.map(s=>({...s,src:s.src&&!s.src.startsWith('blob')&&!s.src.startsWith('data:')?s.src:''}))));  }
+function handleAudioUpload(files){
+  Array.from(files).forEach(file=>{
+    const url=URL.createObjectURL(file);
+    songs.unshift({id:Date.now()+Math.random(),name:file.name.replace(/\.[^.]+$/,''),note:'Uploaded',src:url});
+    renderPlaylist(); showNotif('Song added.');
+  });
+}
+function addSongManual(){
+  const name=document.getElementById('newSongName').value.trim();
+  if(!name){ showNotif('Please enter a song name.'); return; }
+  songs.push({id:Date.now(),name,note:document.getElementById('newSongNote').value.trim(),src:document.getElementById('newSongUrl').value.trim()});
+  save(); renderPlaylist();
+  document.getElementById('newSongName').value='';
+  document.getElementById('newSongNote').value='';
+  document.getElementById('newSongUrl').value='';
+  showNotif('Song added to playlist.');
+}
+function playSong(i){
+  currentIdx=i; const s=songs[i];
+  document.getElementById('nowPlaying').classList.add('visible');
+  document.getElementById('npTitle').textContent=s.name;
+  document.getElementById('npMeta').textContent=s.note||'Our playlist';
+  const audio=document.getElementById('mainAudio');
+  if(s.src){ audio.src=s.src; audio.play(); }
+  else { showNotif('No audio file for this song. Add a URL or upload.'); }
+  renderPlaylist();
+}
+function prevSong(){ if(songs.length) playSong((currentIdx-1+songs.length)%songs.length); }
+function nextSong(){ if(songs.length) playSong((currentIdx+1)%songs.length); }
+function onPlay(){ document.getElementById('vinyl').classList.add('playing'); }
+function onPause(){ document.getElementById('vinyl').classList.remove('playing'); }
+function deleteSong(id,e){
+  e.stopPropagation();
+  if(confirm('Remove from playlist?')){ songs=songs.filter(s=>s.id!==id); save(); renderPlaylist(); }
+}
+function renderPlaylist(){
+  document.getElementById('songCount').textContent=songs.length+' songs';
+  document.getElementById('playlistContainer').innerHTML=songs.map((s,i)=>`
+    <div class="song-item ${i===currentIdx?'active':''}" onclick="playSong(${i})">
+      <span class="song-number">${i+1}</span>
+      <div class="song-info">
+        <div class="song-name">${s.name}</div>
+        <div class="song-note">${s.note||''}</div>
+      </div>
+      <span class="play-icon">${i===currentIdx?'Playing':'Play'}</span>
+      <button class="del-song" onclick="deleteSong(${s.id},event)">Remove</button>
+    </div>
+  `).join('');
+}
+renderPlaylist();
+</script>
+</body>
+</html>
